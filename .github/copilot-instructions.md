@@ -30,26 +30,98 @@ This is a **Godot 4.5 game template** (GL Compatibility renderer) providing reus
 
 ## Architecture
 
-### Autoload Singletons (Global Access)
-Two autoload scripts provide game-wide functionality:
-- **Globals** ([Autoloads/Globals.gd](Autoloads/Globals.gd)) - Central hub for user preferences, save data, audio bus management, settings menu access, and global state enum
-- **SceneManager** ([Autoloads/SceneManager.gd](Autoloads/SceneManager.gd)) - Handles all scene transitions, loading progress, and data handoff between scenes
+### Container-Based System (NEW)
+The project uses a **persistent Main scene** with container-based architecture instead of full scene transitions.
 
-Access autoloads anywhere: `Globals.user_prefs.music_volume` or `SceneManager.swap_scenes(...)`
+**Main Scene Structure:**
+```
+Main.tscn (always loaded)
+├── Player (Node2D) - Persistent, invisible for card games
+│   └── Camera2D - Omnipresent camera
+├── LevelContainer (Node2D) - Swap game levels here
+├── HudContainer (CanvasLayer) - Swap UI/HUD here
+├── MenuContainer (Control) - Swap menus here
+└── TransitionContainer (CanvasLayer, layer=100) - Loading screens appear here
+```
 
-### Scene Loading Pattern
-**ALWAYS use SceneManager for major scene transitions**, never call `get_tree().change_scene_to_file()` directly.
+**Benefits:**
+- Player & Camera persist across all scenes - no re-initialization
+- Granular control - only load/unload what changes
+- Flexible visibility - show/hide containers based on game state
+- Loading screens always render on top (layer 100)
 
+**Container Loading (PREFERRED METHOD):**
 ```gdscript
-# Standard scene transition with loading screen
-SceneManager.swap_scenes(
-    SceneRegistry.levels["game_start"],  # Scene path from registry
-    get_tree().root,                     # Where to load (default: root)
-    self,                                # Scene to unload (can be null)
-    "wipe_to_right"                      # Transition animation name
+# Load level, hide menu
+SceneManager.load_into_container(
+    SceneRegistry.levels["game_start"],
+    SceneManager.ContainerType.LEVEL,
+    [SceneManager.ContainerType.MENU],  # Hide these containers
+    "fade_to_black"
 )
 
-# Zelda-style sliding transition (no loading screen)
+# Load main menu, hide level & HUD
+SceneManager.load_into_container(
+    SceneRegistry.main_scenes["StartScreen"],
+    SceneManager.ContainerType.MENU,
+    [SceneManager.ContainerType.LEVEL, SceneManager.ContainerType.HUD],
+    "fade_to_black"
+)
+
+# Settings menu as overlay (nothing hidden)
+SceneManager.load_into_container(
+    "res://Scenes/Menus/settings_menu.tscn",
+    SceneManager.ContainerType.MENU,
+    [],  # Don't hide anything
+    "fade_to_black"
+)
+```
+
+**Legacy Scene Transitions:**
+The old `swap_scenes()` method still exists for backwards compatibility but is not recommended for new code.
+
+### Folder Structure
+```
+res/
+├── Scenes/
+│   ├── Main/          - Main.tscn, Main.gd (root persistent scene)
+│   ├── Player/        - Player.tscn, Player.gd (persistent player)
+│   ├── Levels/        - All gameplay level scenes
+│   ├── Menus/         - Start screen, settings, loading screens
+│   └── UI/            - HUD components, game UI
+├── Autoloads/         - Globals.gd, SceneManager.gd (singletons)
+├── Resources/         - SaveData, UserPrefs, SceneRegistry
+└── addons/            - Third-party plugins (Todo_Manager)
+```
+
+### Autoload Singletons (Global Access)
+Two autoload scripts provide game-wide functionality:
+- **Globals** ([Autoloads/Globals.gd](Autoloads/Globals.gd)) - Central hub for user preferences, save data, audio bus management, settings menu access, global state enum, and ESC key handler for returning to main menu
+- **SceneManager** ([Autoloads/SceneManager.gd](Autoloads/SceneManager.gd)) - Container loading system, legacy scene transitions, loading progress, and data handoff between scenes
+
+Access autoloads anywhere: `Globals.user_prefs.music_volume` or `SceneManager.load_into_container(...)`
+
+### Scene Loading Pattern
+**ALWAYS use SceneManager.load_into_container() for scene management** in the container-based architecture.
+
+```gdscript
+# Container-based loading (RECOMMENDED)
+SceneManager.load_into_container(
+    scene_path,
+    SceneManager.ContainerType.LEVEL,  # or HUD, MENU
+    [SceneManager.ContainerType.MENU], # Containers to hide
+    "fade_to_black"                    # Transition animation
+)
+
+# Legacy full scene transition (backwards compatibility only)
+SceneManager.swap_scenes(
+    SceneRegistry.levels["game_start"],
+    get_tree().root,
+    self,
+    "wipe_to_right"
+)
+
+# Zelda-style sliding transition (legacy)
 SceneManager.swap_scenes_zelda(scene_path, load_into, scene_to_unload, Vector2.RIGHT)
 ```
 
@@ -89,8 +161,21 @@ func _notification(what):
 
 Open settings from anywhere: `Globals.open_settings_menu()` (currently loads from Globals as preloaded scene)
 
+### Main Scene Registration
+The persistent Main scene must register itself with SceneManager on `_ready()`:
+
+```gdscript
+# In Main.gd
+func _ready() -> void:
+    SceneManager.register_main(self)
+```
+
+This gives SceneManager access to all containers (Level, HUD, Menu, Transition).
+
 ### Loading Screen Integration
-Loading screens are managed by SceneManager but can be repositioned via signals:
+Loading screens automatically appear in the **TransitionContainer** (CanvasLayer 100), ensuring they're always on top of all game content. If Main scene is not registered, loading screens fall back to root (legacy behavior).
+
+SceneManager signals for custom behavior:
 
 ```gdscript
 SceneManager.load_start.connect(_on_load_start)
@@ -98,8 +183,7 @@ SceneManager.scene_added.connect(_on_scene_added)
 SceneManager.load_complete.connect(_on_load_complete)
 
 func _on_load_start(_loading_screen):
-    # Reposition loading screen in SceneTree if needed
-    _loading_screen.reparent(self)
+    # Called when loading begins and loading screen appears in TransitionContainer
 ```
 
 Progress bar only shows if loading takes >1 second (controlled by Timer in LoadingScreen)
@@ -137,7 +221,8 @@ Use `## Doc comments` for public APIs and `# Regular comments` for implementatio
 ### Project Configuration
 - Target: Godot 4.5+ (4.2.1 originally, now 4.5)
 - Resolution: 960×540 (16:9), non-resizable by default, always-on-top enabled
-- Main scene: [Menus/start_screen.tscn](Menus/start_screen.tscn)
+- Main scene: [Scenes/Main/Main.tscn](Scenes/Main/Main.tscn) - Persistent root with containers
+- Start screen: [Scenes/Menus/start_screen.tscn](Scenes/Menus/start_screen.tscn) - Loads into MenuContainer
 - Texture filter: Nearest neighbor (pixel art)
 
 ### Adding New Features
@@ -149,14 +234,35 @@ This is a **template project** meant to be forked. When adding features:
 
 ### Known Limitations
 - SceneManager doesn't support concurrent loading (only one scene at a time)
-- Check `SceneManager._loading_in_progress` if rapid scene changes possible
-- Zelda transitions assume uniform level sizes (LEVEL_H=960, LEVEL_W=540)
+- Check `SceneManager._loading_in_progress` if rapid scene changes possib - legacy feature
+- Container visibility is binary (visible/hidden) - no partial transparency control
 - No localization system yet (planned, language dropdown exists but not wired)
 
 ## Quick Reference
 
+**Return to main menu:** Press `ESC` key or call `Globals.return_to_main_menu()`  
 **Open settings:** `Globals.open_settings_menu()`  
-**Change scene:** `SceneManager.swap_scenes(path, load_into, unload, transition)`  
+**Load into container:** `SceneManager.load_into_container(path, container_type, hide_containers, transition)`  
+**Legacy scene change:** `SceneManager.swap_scenes(path, load_into, unload, transition)` (not recommended)  
 **Access saves:** `Globals.save.method_name()` or `Globals.user_prefs.property`  
 **Add new scene:** Update `SceneRegistry` constants first  
+**Audio volume:** `Globals.user_prefs.music_volume` (0.0-1.0 range)
+
+## Container Types
+
+```gdscript
+SceneManager.ContainerType.LEVEL  # Load gameplay levels here
+SceneManager.ContainerType.HUD    # Load UI/HUD elements here
+SceneManager.ContainerType.MENU   # Load menus here
+```
+
+**Example Usage:**
+See [CONTAINER_USAGE_EXAMPLES.gd](CONTAINER_USAGE_EXAMPLES.gd) for detailed examples of:
+- Loading main menu
+- Starting game levels
+- Opening settings overlays
+- Playing cutscenes
+- Level transitions with persistent HUD
+
+For complete architecture documentation, see [Documentation/CONTAINER_ARCHITECTURE.md](Documentation/CONTAINER_ARCHITECTURE.md)
 **Audio volume:** `Globals.user_prefs.music_volume` (0.0-1.0 range)

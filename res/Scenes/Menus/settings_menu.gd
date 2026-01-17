@@ -22,10 +22,14 @@ signal language_changed(language: String)
 @onready var MUSIC_BUS_ID = AudioServer.get_bus_index("Music")
 
 var user_prefs:UserPrefs
+var _previous_game_state:Globals.GameState
 
 func _ready():
 	# load (or create) file with these saved preferences
 	user_prefs = UserPrefs.load_or_create()
+	
+	# Store previous state to restore later
+	_previous_game_state = Globals.current_game_state
 	
 	# note - if you want the option to save your game from this menu, replace the hardcoded
 	# false with logic that assures the game is in a savable state
@@ -84,7 +88,12 @@ func _on_language_dropdown_item_selected(_index):
 func _notification(what):
 	match what:
 		NOTIFICATION_ENTER_TREE:
-			get_tree().paused = true
+			# Pause game when settings open
+			Globals.pause_game()
 		NOTIFICATION_EXIT_TREE:
 			user_prefs.save()
-			get_tree().paused = false
+			# Resume game if it was playing before settings opened
+			if _previous_game_state == Globals.GameState.PLAYING:
+				Globals.resume_game()
+			elif _previous_game_state == Globals.GameState.MAIN_MENU:
+				Globals.set_game_state(Globals.GameState.MAIN_MENU)

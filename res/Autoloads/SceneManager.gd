@@ -36,6 +36,14 @@ extends Node
 const LEVEL_H:int = 960	## height of levels (viewport) - only used by Zelda transition
 const LEVEL_W:int = 540	## width of levels (viewport) - only used by Zelda transition
 
+enum ContainerType {
+	LEVEL,		## Loads into LevelContainer
+	HUD,		## Loads into HudContainer  
+	MENU		## Loads into MenuContainer
+}
+
+var _main_scene:Main = null	## Reference to the persistent Main scene
+
 signal load_start(loading_screen)	## Triggered when an asset begins loading
 signal scene_added(loaded_scene:Node,loading_screen)	## Triggered right after asset is added to SceneTree but before transition animation finishes
 signal load_complete(loaded_scene:Node)	## Triggered when loading has completed
@@ -44,7 +52,7 @@ signal _content_finished_loading(content)	## internal - triggered when content i
 signal _content_invalid(content_path:String)	## internal - triggered when attempting to load invalid content (e.g. an asset does not exist or path is incorrect)
 signal _content_failed_to_load(content_path:String)	## internal - triggered when loading has started but failed to complete
 
-var _loading_screen_scene:PackedScene = preload("res://Menus/loading_canvass.tscn")	## reference to loading screen PackedScene, if you don't want the loading screen to ALWAYS be on top and instead want more granular control, instead preload loading_screen and then use the signals above to reposition nodes as needed
+var _loading_screen_scene:PackedScene = preload("res://Scenes/Menus/loading_canvass.tscn")	## reference to loading screen PackedScene, if you don't want the loading screen to ALWAYS be on top and instead want more granular control, instead preload loading_screen and then use the signals above to reposition nodes as needed
 var _loading_screen:LoadingScreen	## internal - reference to loading screen instance
 var _transition:String	## internal - transition being used for current load
 var _zelda_transition_direction:Vector2	## internal - direction of zelda transition (should only be passed Vector2.UP/RIGHT/DOWN/LEFT) Is passed in when calling [code]swap_scenes_zelda()[/code]
@@ -60,32 +68,87 @@ func _ready() -> void:
 	_content_failed_to_load.connect(_on_content_failed_to_load)
 	_content_finished_loading.connect(_on_content_finished_loading)
 
-## internal - adds the loading screen. The loading screen is added to the [code]root[/code]. 
-## To make changes to where the loading screen ends up, you can listen for the signals [code]scene_added[/code] 
-## and [code]load_complete[/code] to reposition loading screen or other elements, relative to the 
-## loading screen appropriately. [br][br]
-## For example, the following code from Gameplay (a sample "game manager" of sorts) listens for these
-## signals and and then makes adjustments to the SceneTree to keep the HUD always above the loading screen
-## [codeblock]
-##	func _on_load_start(_loading_screen):
-##	pass
-##	# keep HUD on top of loading screen
-##	_loading_screen.reparent(self)
-##	move_child(_loading_screen,hud.get_index())
-## [/codeblock]
-## This may seem an odd way to do this, but the alternative is having set properties at the SceneManager level
-## before loading asset OR having yet another parameter to pass in (several if you want to options to control
-## where in the scene tree or relative to which node you want to put it. By simply listening for this event,
-## you can write any logic you want and handle it as needed without having to change SceneManager to suit your specific needs :)
+## Register the Main scene reference so SceneManager can access containers
+func register_main(main:Main) -> void:
+	_main_scene = main
+	print("SceneManager: Main scene registered")
+
+## internal - adds the loading screen to the TransitionContainer
+## The TransitionContainer (CanvasLayer 100) ensures transitions are always on top
+## If Main scene is not registered, falls back to root (legacy behavior)
 func _add_loading_screen(transition_type:String="fade_to_black"):
-	# using "no_in_transition" as the transition name when skipping a transition felt... weird
-	# dunno if this solution is better, but it's only one line so I can live with this one-off
-	# An alternative would be to store strating animations in a dictionary and swap them for the animation name
-	# it removes this one-off, but adds a step elsewhere - all about preference.
 	_transition = "no_to_transition" if transition_type == "no_transition" else transition_type
 	_loading_screen = _loading_screen_scene.instantiate() as LoadingScreen
-	get_tree().root.add_child(_loading_screen)
+	
+	# Add to TransitionContainer if Main scene is registered, otherwise fall back to root
+	if _main_scene != null and _main_scene.transition_container != null:
+		_main_scene.transition_container.add_child(_loading_screen)
+	else:
+		get_tree().root.add_child(_loading_screen)
+		
 	_loading_screen.start_transition(_transition)
+	
+## Load content into a specific container (Level, HUD, or Menu)
+## This is the new method for the container-based architecture
+## [b][color=plum]scene_to_load[/color][/b] - [String] path to the resource to load[br]	
+## [b][color=plum]container[/color][/b] - [ContainerType] which container to load into[br]
+## [b][color=plum]hide_other_containers[/color][/b] - [Array[ContainerType]] containers to hide/disable[br]
+## [b][color=plum]transition_type[/color][/b] - [String] name of transition (default: fade_to_black)[br]
+func load_into_container(scene_to_load:String, container:ContainerType, hide_other_containers:Array[ContainerType] = [], transition_type:String="fade_to_black") -> void:
+	if _loading_in_progress:
+		push_warning("SceneManager is already loading something")
+		return
+	
+	if _main_scene == null:
+		push_error("Main scene not registered! Call register_main() first")
+		return
+	
+	_loading_in_progress = true
+	
+	# Determine which container to load into
+	var target_container:Node = null
+	match container:
+		ContainerType.LEVEL:
+			target_container = _main_scene.level_container
+		ContainerType.HUD:
+			target_container = _main_scene.hud_container
+		ContainerType.MENU:
+			target_container = _main_scene.menu_container
+	
+	# Find and mark the current child for unloading
+	var scene_to_unload:Node = null
+	if target_container.get_child_count() > 0:
+		scene_to_unload = target_container.get_child(0)
+	
+	_load_scene_into = target_container
+	_scene_to_unload = scene_to_unload
+	
+	# Hide/show containers as requested
+	_manage_container_visibility(hide_other_containers)
+	
+	_add_loading_screen(transition_type)
+	_load_content(scene_to_load)
+
+## Internal - manages which containers are visible
+func _manage_container_visibility(containers_to_hide:Array[ContainerType]) -> void:
+	if _main_scene == null:
+		return
+	
+	# Show all containers by default
+	_main_scene.level_container.visible = true
+	_main_scene.hud_container.visible = true
+	_main_scene.menu_container.visible = true
+	
+	# Hide requested containers
+	for container in containers_to_hide:
+		match container:
+			ContainerType.LEVEL:
+				_main_scene.level_container.visible = false
+			ContainerType.HUD:
+				_main_scene.hud_container.visible = false
+			ContainerType.MENU:
+				_main_scene.menu_container.visible = false
+
 	
 ## This is likely the most common public method. It's used to change between two scenes (assets)[br][br]
 ## [b][color=plum]scene_to_load[/color][/b] - [String] path to the resource you'd like to load[br]	

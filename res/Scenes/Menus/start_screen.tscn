@@ -1,6 +1,6 @@
 [gd_scene load_steps=18 format=3 uid="uid://dy06fpapockt1"]
 
-[ext_resource type="Script" path="res://Menus/start_screen.gd" id="1_v6k1a"]
+[ext_resource type="Script" path="res://Scenes/Menus/start_screen.gd" id="1_v6k1a"]
 
 [sub_resource type="Image" id="Image_ssqj0"]
 data = {
