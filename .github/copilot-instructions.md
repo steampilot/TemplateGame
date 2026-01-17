@@ -95,11 +95,12 @@ res/
 ```
 
 ### Autoload Singletons (Global Access)
-Two autoload scripts provide game-wide functionality:
-- **Globals** ([Autoloads/Globals.gd](Autoloads/Globals.gd)) - Central hub for user preferences, save data, audio bus management, settings menu access, global state enum, and ESC key handler for returning to main menu
+Three autoload scripts provide game-wide functionality:
+- **Globals** ([Autoloads/Globals.gd](Autoloads/Globals.gd)) - Central hub for user preferences, save data, audio bus management, settings menu access, global state enum, and game context for continue functionality
 - **SceneManager** ([Autoloads/SceneManager.gd](Autoloads/SceneManager.gd)) - Container loading system, legacy scene transitions, loading progress, and data handoff between scenes
+- **InputManager** ([Autoloads/InputManager.gd](Autoloads/InputManager.gd)) - Central input router that intercepts inputs and emits signals for decoupled input handling
 
-Access autoloads anywhere: `Globals.user_prefs.music_volume` or `SceneManager.load_into_container(...)`
+Access autoloads anywhere: `Globals.user_prefs.music_volume` or `SceneManager.load_into_container(...)` or `InputManager.main_menu_requested.connect(...)`
 
 ### Scene Loading Pattern
 **ALWAYS use SceneManager.load_into_container() for scene management** in the container-based architecture.

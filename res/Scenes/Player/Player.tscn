@@ -1,9 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://b7j2xvn3qrk8v"]
-
-[ext_resource type="Script" path="res://Scenes/Player/Player.gd" id="1_script"]
-
-[node name="Player" type="Node2D"]
-script = ExtResource("1_script")
-
-[node name="Camera2D" type="Camera2D" parent="."]
-enabled = true
