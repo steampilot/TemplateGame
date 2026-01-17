@@ -6,10 +6,11 @@ Dieses Template ist für Pixelart 2D Games optimiert. Die richtige Resolution is
 
 ## Aktuelle Resolution
 
-**480×270 (16:9 Format)**
+**640×360 (16:9 Format)**
 - Native Viewport-Größe
-- Guter Kompromiss zwischen Detail und Pixelart-Charakter
+- Größere Pixelart mit mehr Details
 - Integer Scaling-freundlich
+- Perfekt für UI-reiche Spiele wie Card Games
 
 ## Gängige Pixelart-Resolutions
 
@@ -18,8 +19,8 @@ Dieses Template ist für Pixelart 2D Games optimiert. Die richtige Resolution is
 | Resolution | Aspect Ratio | Beschreibung | Beispiele |
 |------------|--------------|--------------|-----------|
 | **320×180** | 16:9 | Sehr klein, authentischer Retro-Look | Celeste |
-| **480×270** | 16:9 | Guter Mittelweg (Template Standard) | - |
-| **640×360** | 16:9 | Größere Pixelart, mehr Details | - |
+| **480×270** | 16:9 | Guter Mittelweg | - |
+| **640×360** | 16:9 | Größere Pixelart, mehr Details (Template Standard) | - |
 | **256×224** | 4:3 | SNES-ähnlich, klassischer Look | Super Mario World |
 | **400×240** | 5:3 | GBA-ähnlich | - |
 
@@ -28,12 +29,22 @@ Dieses Template ist für Pixelart 2D Games optimiert. Die richtige Resolution is
 | Resolution | Aspect Ratio | Beschreibung |
 |------------|--------------|--------------|
 | **480×270** | 16:9 | Gut für UI und Menüs |
-| **640×360** | 16:9 | Mehr Platz für Cards/UI |
+| **640×360** | 16:9 | Mehr Platz für Cards/UI (Template Standard) |
 | **320×240** | 4:3 | Retro Card Game Look |
 
 ## Integer Scaling
 
 **Kritisch für scharfe Pixel!** Die native Resolution sollte sich ganzzahlig auf gängige Monitor-Auflösungen skalieren lassen.
+
+### Scaling-Faktoren für 640×360 (Template Standard)
+
+| Faktor | Output Resolution | Monitor |
+|--------|-------------------|---------|  
+| **1x** | 640×360 | Native (klein) |
+| **2x** | 1280×720 | HD |
+| **3x** | 1920×1080 | Full HD ✓ Perfekt! |
+| **4x** | 2560×1440 | 2K |
+| **6x** | 3840×2160 | 4K ✓ Perfekt! |
 
 ### Scaling-Faktoren für 480×270
 
@@ -64,8 +75,8 @@ Dieses Template ist für Pixelart 2D Games optimiert. Die richtige Resolution is
 
 ```ini
 [display]
-window/size/viewport_width=480
-window/size/viewport_height=270
+window/size/viewport_width=640
+window/size/viewport_height=360
 window/stretch/mode="canvas_items"  # Für Pixelart
 window/stretch/aspect="keep"        # Behält Aspect Ratio
 ```
@@ -92,8 +103,8 @@ Wenn du die Resolution änderst, passe auch die Zelda-Transition Konstanten an:
 
 In [Autoloads/SceneManager.gd](Autoloads/SceneManager.gd):
 ```gdscript
-const LEVEL_H:int = 270  # Deine Viewport-Höhe
-const LEVEL_W:int = 480  # Deine Viewport-Breite
+const LEVEL_H:int = 360  # Deine Viewport-Höhe
+const LEVEL_W:int = 640  # Deine Viewport-Breite
 ```
 
 ## Best Practices
@@ -152,12 +163,18 @@ Deine Sprite-Größen sollten zur Resolution passen:
 
 ## Empfehlung für dieses Template
 
-**Current: 480×270** ist ein guter Standard weil:
-- ✓ Perfektes 4x Scaling auf Full HD (1920×1080)
-- ✓ Perfektes 8x Scaling auf 4K (3840×2160)
-- ✓ Genug Platz für UI und Gameplay
-- ✓ Authentischer Pixelart-Look
-- ✓ Nicht zu klein für Entwicklung/Debugging
+**Current: 640×360** ist ein guter Standard weil:
+- ✓ Perfektes 3x Scaling auf Full HD (1920×1080)
+- ✓ Perfektes 6x Scaling auf 4K (3840×2160)
+- ✓ Viel Platz für UI, Karten und Gameplay-Elemente
+- ✓ Authentischer Pixelart-Look mit mehr Details
+- ✓ Ideal für Card Games und UI-lastige Spiele
+- ✓ Gut lesbare Texte und Icons
+
+**Alternative: 480×270** wenn du:
+- Kleinere Sprites bevorzugst
+- Noch mehr Retro-Look willst
+- Einfacheres UI-Design hast
 
 **Alternative: 320×180** wenn du:
 - Extremen Retro-Look willst (wie Celeste)

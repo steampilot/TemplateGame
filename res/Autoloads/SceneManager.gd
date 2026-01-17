@@ -33,8 +33,8 @@ extends Node
 ## approach will have limitations as well. The way I intended SceneManager for my own use, this will rarely
 ## if ever, be an issue, which is why that was an acceptable limitation. Just something to be aware of. 
 
-const LEVEL_H:int = 270	## height of levels (viewport) - only used by Zelda transition
-const LEVEL_W:int = 480	## width of levels (viewport) - only used by Zelda transition
+const LEVEL_H:int = 360	## height of levels (viewport) - only used by Zelda transition
+const LEVEL_W:int = 640	## width of levels (viewport) - only used by Zelda transition
 
 enum ContainerType {
 	LEVEL,		## Loads into LevelContainer

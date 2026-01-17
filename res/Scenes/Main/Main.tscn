@@ -1,12 +1,13 @@
 [gd_scene load_steps=3 format=3 uid="uid://cjv5hhqyxk3bw"]
 
-[ext_resource type="Script" path="res://Scenes/Main/Main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://dh45wx6t3yvvx" path="res://Scenes/Main/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b7j2xvn3qrk8v" path="res://Scenes/Player/Player.tscn" id="2_player"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
+metadata/_edit_group_ = true
 
 [node name="LevelContainer" type="Node2D" parent="."]
 

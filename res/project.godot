@@ -22,8 +22,8 @@ SceneManager="*res://Autoloads/SceneManager.gd"
 
 [display]
 
-window/size/viewport_width=480
-window/size/viewport_height=270
+window/size/viewport_width=640
+window/size/viewport_height=360
 window/size/resizable=false
 window/size/always_on_top=true
 window/stretch/aspect="expand"
