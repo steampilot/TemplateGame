@@ -220,7 +220,8 @@ Use `## Doc comments` for public APIs and `# Regular comments` for implementatio
 
 ### Project Configuration
 - Target: Godot 4.5+ (4.2.1 originally, now 4.5)
-- Resolution: 960×540 (16:9), non-resizable by default, always-on-top enabled
+- Resolution: 480×270 (16:9), optimized for pixel art with integer scaling (see [PIXELART_RESOLUTION_GUIDE.md](Documentation/PIXELART_RESOLUTION_GUIDE.md))
+- Window: Non-resizable by default, always-on-top enabled
 - Main scene: [Scenes/Main/Main.tscn](Scenes/Main/Main.tscn) - Persistent root with containers
 - Start screen: [Scenes/Menus/start_screen.tscn](Scenes/Menus/start_screen.tscn) - Loads into MenuContainer
 - Texture filter: Nearest neighbor (pixel art)
@@ -234,7 +235,8 @@ This is a **template project** meant to be forked. When adding features:
 
 ### Known Limitations
 - SceneManager doesn't support concurrent loading (only one scene at a time)
-- Check `SceneManager._loading_in_progress` if rapid scene changes possib - legacy feature
+- Check `SceneManager._loading_in_progress` if rapid scene changes possible
+- Zelda transitions assume uniform level sizes (LEVEL_H=270, LEVEL_W=480) - legacy feature
 - Container visibility is binary (visible/hidden) - no partial transparency control
 - No localization system yet (planned, language dropdown exists but not wired)
 
