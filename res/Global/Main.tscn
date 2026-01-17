@@ -1,0 +1,50 @@
+[gd_scene load_steps=4 format=3 uid="uid://n8jhqt1hq7ck"]
+
+[ext_resource type="Script" uid="uid://bjw6tt2smmq3f" path="res://Global/Main.gd" id="1_uiky5"]
+[ext_resource type="Script" uid="uid://ble6wybxkqkcg" path="res://Global/Player.gd" id="2_ed0e0"]
+[ext_resource type="PackedScene" uid="uid://doikmwd3kq0eg" path="res://Global/boot_screen.tscn" id="3_ed0e0"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_uiky5")
+
+[node name="Player" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(-48, -55)
+script = ExtResource("2_ed0e0")
+metadata/_edit_group_ = true
+
+[node name="LevelContainer" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="HudContainer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+offset_left = -165.0
+offset_top = -165.0
+offset_right = -125.0
+offset_bottom = -125.0
+
+[node name="MenuContainer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+offset_left = -90.0
+offset_top = -151.0
+offset_right = -50.0
+offset_bottom = -111.0
+
+[node name="TransitionContainer" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = 13.0
+offset_top = 35.0
+offset_right = 181.0
+offset_bottom = 85.0
+
+[node name="BootScreen" parent="." instance=ExtResource("3_ed0e0")]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(320, 182)
