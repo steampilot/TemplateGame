@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://doikmwd3kq0eg"]
+[gd_scene load_steps=3 format=3 uid="uid://doikmwd3kq0eg"]
 
+[ext_resource type="Script" uid="uid://4t60uxd241n4" path="res://Global/boot_screen.gd" id="1_3evw7"]
 [ext_resource type="Texture2D" uid="uid://dvkoam883tr2c" path="res://Assets/Sprites/GameBootScreen.png" id="1_gbvmm"]
 
 [node name="BootScreen" type="Control"]
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_3evw7")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 1
@@ -19,7 +21,9 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("1_gbvmm")
 
-[node name="Button" type="Button" parent="."]
+[node name="StartButton" type="Button" parent="."]
+unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5

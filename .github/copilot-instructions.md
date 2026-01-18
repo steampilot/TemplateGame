@@ -217,6 +217,65 @@ if !LEVEL_STATUS.has(value):
 ### Comments & Documentation
 Use `## Doc comments` for public APIs and `# Regular comments` for implementation details. See [SceneManager.gd](Autoloads/SceneManager.gd) for documentation standards.
 
+### State Machine Pattern (LSL-Style)
+**CRITICAL:** Every script with logic MUST use the LSL-style state machine pattern for consistency and maintainability.
+
+**Template Structure:**
+```gdscript
+extends Node  # or Control, Node2D, etc.
+
+## State Machine
+enum State {
+	DEFAULT,    ## Default state
+	# Add more states as needed
+}
+
+var current_state:State = State.DEFAULT
+
+func _ready() -> void:
+	# State machine starts in default state
+	_change_state(State.DEFAULT)
+
+## State Machine - Change State
+func _change_state(new_state:State) -> void:
+	# State exit for current state
+	match current_state:
+		State.DEFAULT:
+			_state_exit_default()
+	
+	current_state = new_state
+	print("%s State: %s" % [name, State.keys()[current_state]])
+	
+	# State entry for new state
+	match current_state:
+		State.DEFAULT:
+			_state_entry_default()
+
+## ============================================
+## STATE: DEFAULT
+## ============================================
+func _state_entry_default() -> void:
+	# Entry logic here
+	pass
+
+func _state_exit_default() -> void:
+	# Cleanup logic here
+	pass
+```
+
+**Key Principles:**
+- ALL scripts with logic use this pattern (even single-state scripts)
+- State changes via `_change_state()` only
+- Each state has `_state_entry_X()` and `_state_exit_X()` methods
+- Print state changes for debugging: `print("ClassName State: %s" % State.keys()[current_state])`
+- Script templates in `res://script_templates/` auto-generate this pattern
+
+**Examples in Project:**
+- Main.gd: BOOT, MAIN_MENU, PLAYING, PAUSED
+- Player.gd: IDLE, ACTIVE, WAITING, DISABLED
+- DisplayManager.gd: WINDOWED, FULLSCREEN
+- boot_screen.gd: DEFAULT (single state example)
+
 ## Development Workflow
 
 ### Project Configuration

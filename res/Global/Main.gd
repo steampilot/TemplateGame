@@ -4,6 +4,9 @@ class_name Main extends Node
 ## This scene stays loaded throughout the entire game session
 ## The stage (Main) transitions between different states
 
+## Signals
+signal boot_ready  ## Emitted when boot process is complete and game is ready to start
+
 @onready var player:Player = $Player  ## Player is omnipresent (even when invisible)
 @onready var level_container:Node = $LevelContainer
 @onready var hud_container:Node = $HudContainer
@@ -73,32 +76,16 @@ func _state_entry_boot() -> void:
 	# Show boot screen (black background + sprite)
 	boot_screen.visible = true
 	
-	# Start button (if available)
-	if boot_start_button != null:
-		boot_start_button.visible = false  # Button initially hidden
-		
-		# 3 second delay
-		await get_tree().create_timer(3.0).timeout
-		
-		# Show start button
-		boot_start_button.visible = true
-		boot_start_button.pressed.connect(_on_boot_start_pressed)
-		
-		print("Boot screen ready - waiting for Start button")
-	else:
-		print("Boot screen visible - no Start button found")
+	# Simulate loading (5 second delay)
+	await get_tree().create_timer(5.0).timeout
+	
+	# Boot complete - emit signal for BootScreen to show Start button
+	boot_ready.emit()
+	print("Boot complete - ready signal emitted")
 
 func _state_exit_boot() -> void:
 	# Hide boot screen when leaving state
 	boot_screen.visible = false
-	if boot_start_button != null and boot_start_button.pressed.is_connected(_on_boot_start_pressed):
-		boot_start_button.pressed.disconnect(_on_boot_start_pressed)
-
-## Start button was clicked
-func _on_boot_start_pressed() -> void:
-	print("Start button pressed!")
-	# Later: _change_state(State.MAIN_MENU)
-	# For now: just acknowledge the signal
 
 ## ============================================
 ## STATE: MAIN_MENU
