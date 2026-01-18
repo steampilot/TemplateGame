@@ -4,9 +4,10 @@ extends Node
 ## Fängt Inputs ab und emittiert Signals für decoupled input handling
 
 ## Signals für verschiedene Input-Events
-signal main_menu_requested      ## ESC key pressed
-signal pause_requested          ## P key pressed
-signal settings_requested       ## O key pressed
+signal main_menu_requested      ## main_menu action pressed
+signal pause_requested          ## pause_game action pressed
+signal settings_requested       ## settings_menu action pressed
+signal fullscreen_requested     ## toggle_fullscreen action pressed
 
 ## State Machine
 enum State {
@@ -73,19 +74,24 @@ func _input(event:InputEvent) -> void:
 	if current_state != State.ACTIVE:
 		return
 	
-	# ESC key - Main Menu
+	# Main Menu action
 	if event.is_action_pressed("main_menu"):
 		main_menu_requested.emit()
 		get_viewport().set_input_as_handled()
 	
-	# P key - Pause
+	# Pause action
 	elif event.is_action_pressed("pause_game"):
 		pause_requested.emit()
 		get_viewport().set_input_as_handled()
 	
-	# O key - Settings
+	# Settings action
 	elif event.is_action_pressed("settings_menu"):
 		settings_requested.emit()
+		get_viewport().set_input_as_handled()
+	
+	# Toggle Fullscreen action
+	elif event.is_action_pressed("toggle_fullscreen"):
+		fullscreen_requested.emit()
 		get_viewport().set_input_as_handled()
 
 
